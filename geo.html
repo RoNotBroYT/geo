@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Dash Clone</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        canvas {
+            border: 1px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Player object
+        const player = {
+            width: 20,
+            height: 20,
+            x: 50,
+            y: canvas.height - 20,
+            color: '#fff',
+            dy: 0,
+            gravity: 0.5,
+            jumpPower: -10,
+            onGround: true
+        };
+
+        // Obstacles array and parameters
+        const obstacles = [];
+        const obstacleWidth = 20;
+        const obstacleHeight = 20;
+        let obstacleSpeed = 3;
+        let obstacleFrequency = 90;
+
+        let frame = 0;
+
+        // Function to draw the player
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y - player.height, player.width, player.height);
+        }
+
+        // Function to draw an obstacle
+        function drawObstacle(obstacle) {
+            ctx.fillStyle = obstacle.color;
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
+
+        // Function to create a new obstacle
+        function createObstacle() {
+            const type = Math.random() < 0.5 ? 'ground' : 'floating';
+            let obstacle = {
+                x: canvas.width,
+                width: obstacleWidth,
+                height: obstacleHeight,
+                speed: obstacleSpeed
+            };
+
+            if (type === 'ground') {
+                obstacle.y = canvas.height - obstacleHeight;
+                obstacle.color = '#f00';
+            } else {
+                obstacle.y = canvas.height - obstacleHeight * 5 - Math.random() * 100;
+                obstacle.color = '#0f0';
+            }
+
+            obstacles.push(obstacle);
+        }
+
+        // Function to update obstacles' positions
+        function updateObstacles() {
+            obstacles.forEach((obstacle, index) => {
+                obstacle.x -= obstacle.speed;
+                if (obstacle.x + obstacle.width < 0) {
+                    obstacles.splice(index, 1);
+                }
+            });
+        }
+
+        // Function to check for collisions
+        function checkCollision() {
+            obstacles.forEach(obstacle => {
+                if (player.x < obstacle.x + obstacle.width &&
+                    player.x + player.width > obstacle.x &&
+                    player.y < obstacle.y + obstacle.height &&
+                    player.y > obstacle.y) {
+                    alert('Game Over!');
+                    document.location.reload();
+                }
+            });
+        }
+
+        // Function to update the player's position
+        function updatePlayer() {
+            player.y += player.dy;
+            if (player.y + player.height >= canvas.height) {
+                player.y = canvas.height - player.height;
+                player.dy = 0;
+                player.onGround = true;
+            } else {
+                player.dy += player.gravity;
+            }
+        }
+
+        // Function to make the player jump
+        function jump() {
+            if (player.onGround) {
+                player.dy = player.jumpPower;
+                player.onGround = false;
+            }
+        }
+
+        // Main game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawPlayer();
+            obstacles.forEach(drawObstacle);
+
+            if (frame % obstacleFrequency === 0) {
+                createObstacle();
+            }
+            updateObstacles();
+            updatePlayer();
+            checkCollision();
+
+            frame++;
+            if (frame % 600 === 0) {
+                obstacleSpeed += 0.5;
+                if (obstacleFrequency > 30) {
+                    obstacleFrequency -= 5;
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event listener for jump controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                jump();
+            }
+        });
+
+        // Start the game loop
+        gameLoop();
+    </script>
+</body>
+</html>
